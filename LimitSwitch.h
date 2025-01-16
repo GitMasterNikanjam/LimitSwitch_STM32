@@ -38,6 +38,11 @@
 // ####################################################################
 // LimitSwitch object
 
+/**
+ * @class LimitSwitch
+ * @brief The class for limitswitch/microswitch management.
+ * @note - For interrupt mode, it is recomended Config external interrupt outside of this class.
+ */
 class LimitSwitch
 {
     public:
@@ -52,8 +57,9 @@ class LimitSwitch
         * @param pin: GPIO pin number. It can be GPIO_PIN_0, GPIO_PIN_1, ...
         * @param activeMode: Sensor active mode. 0: Active low (Default), 1: Active high. 
         * @param pudMode: Sensor pullup/pulldown mode. PUD_OFF:0 (Default), PUD_UP:1, PUD_DOWN:2 
+        * @param interruptMode: is the external interrupt mode enable/disable. The true value means it is enabled.
         */
-        LimitSwitch(GPIO_TypeDef *port, uint16_t pin, uint8_t activeMode = 0, uint8_t pudMode = 0);
+        LimitSwitch(GPIO_TypeDef *port, uint16_t pin, uint8_t activeMode = 0, uint8_t pudMode = 0, bool interruptMode = false);
 
        /**
         * @brief Apply setting on hardware. Start LimitSwitch action.
@@ -78,8 +84,16 @@ class LimitSwitch
          * @brief Return last state of sensor limitswitch that updated.
          * @return true if the sensor is touched or pressed.
          * @return false if the sensor is not touched or pressed.
+         * @note - This function useful when object is in interrupt mode.
          */
         bool get(void) {return _state;};
+
+        /**
+         * @brief External interrupt callback function.
+         * @note - This funcition must implement in the **HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)** function.
+         * @note - If object set in interrupt mode, then use this function, otherwise dont use.
+         */
+        void EXTI_Callback(void);
 
     private:
 
@@ -89,7 +103,7 @@ class LimitSwitch
         /**
          * @brief GPIO pin state.
          */
-        bool _state;
+        volatile bool _state;
         
         /**
          * @brief GPIO port. 
@@ -107,8 +121,11 @@ class LimitSwitch
         /// @brief Sensor pullup/pulldown mode. PUD_OFF:0 (Default), PUD_UP:1, PUD_DOWN:2 
         uint8_t _PUD_MODE;
 
+        /// @brief External interupt enabled/disabled. true: enabled.
+        bool _interruptMode;
+
         /**
          * @brief Enable RCC GPIO PORT for certain port.
          */
-        void RCC_GPIO_CLK_ENABLE(GPIO_TypeDef *GPIO_PORT);
+        bool _RCC_GPIO_CLK_ENABLE(GPIO_TypeDef *GPIO_PORT);
 };
